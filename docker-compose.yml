@@ -1,0 +1,53 @@
+
+version: '3.8'
+networks:
+  demo-spring-docker-network:
+    driver: bridge
+
+services:
+  mysql-container:
+    image: mysql:8.0.28
+    container_name: mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: demo_app
+      MYSQL_USER: duynt
+      MYSQL_PASSWORD: Abc@123456
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./src/main/resources/sql/init_data.sql:/docker-entrypoint-initdb.d/init_data.sql
+    networks:
+      - demo-spring-docker-network
+
+  spring-boot-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spring-boot-app
+    depends_on:
+      - mysql-container
+    ports:
+      - "8080:8080"
+    image: springboot-docker:v1.1.1
+    volumes:
+      - ".:/app"
+    networks:
+      - demo-spring-docker-network
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    ports:
+      - "8090:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+    networks:
+      - demo-spring-docker-network
+
+
+volumes:
+  mysql-data:
+  jenkins-data:
